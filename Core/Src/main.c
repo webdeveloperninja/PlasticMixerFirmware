@@ -53,19 +53,86 @@ osThreadId defaultTaskHandle;
 void SystemClock_Config(void);
 void StartDefaultTask(void const * argument);
 
+
 /* USER CODE BEGIN PFP */
+
+void StartAdditiveMaterialMotorClockwise(int stepsPerSecond);
+void StopAdditiveMaterialMotor();
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void VirginMaterialFlowCalibartionTask(void *argument) {
-    const TickType_t xDelay = 5000 / portTICK_PERIOD_MS;  // 5 seconds delay
+
+// SET FROM CALIBRATION PROCESS
+int VirginMaterialCupsPerSecond = 0;
+
+// USER INPUT FROM HMI
+int VirginMaterialGramsPerCup = 0;
+
+// USER INPUT FROM HMI
+int PercentColorMaterial = 0;
+
+// SET FROM CALIBRATION
+int AdditiveMaterialMotorStepsPerSecond = 100;
+
+int CalculateAdditiveMaterialMotorSpeedIntervalSeconds = 300;
+
+
+TaskHandle_t xStartAdditiveMotorTaskHandle = NULL;
+
+void StartAdditiveMotorTask(void *argument)
+{
+    const TickType_t xDelay = CalculateAdditiveMaterialMotorSpeedIntervalSeconds * 1000 / portTICK_PERIOD_MS;
+
     while (1) {
+        // Run Long process to determine VirginMaterialCupsPerSecond
+
+    	// Calculate AdditiveMaterialMotorStepsPerSecond
+
+        StartAdditiveMaterialMotorClockwise(AdditiveMaterialMotorStepsPerSecond);
+
         printf("Virgin Material Flow Calibration Task\n");
-        vTaskDelay(xDelay);  // Delay for 5 seconds
+        vTaskDelay(xDelay);
     }
+}
+
+void StartFeed()
+{
+    if (xStartAdditiveMotorTaskHandle == NULL)
+    {
+        xTaskCreate(
+        	StartAdditiveMotorTask,
+			"StartAdditiveMotorTask",
+			configMINIMAL_STACK_SIZE,
+			NULL,
+			2,
+			&xStartAdditiveMotorTaskHandle
+		);
+    }
+}
+
+void StopFeed()
+{
+	StopAdditiveMaterialMotor();
+
+	if (xStartAdditiveMotorTaskHandle != NULL)
+	{
+		vTaskDelete(xStartAdditiveMotorTaskHandle);
+		xStartAdditiveMotorTaskHandle = NULL;
+	}
+}
+
+void StartAdditiveMaterialMotorClockwise(int stepsPerSecond)
+{
+	// TODO: Implement
+}
+
+
+void StopAdditiveMaterialMotor()
+{
+	// TODO: Implement
 }
 
 /* USER CODE END 0 */
@@ -79,9 +146,7 @@ int main(void)
   HAL_Init();                      // Initialize the Hardware Abstraction Layer
   SystemClock_Config();            // Configure the System Clock
 
-  /* Create the task, storing the handle. */
-  TaskHandle_t xHandle = NULL;
-  xTaskCreate(VirginMaterialFlowCalibartionTask, "VirginMaterialFlowCalibartionTask", configMINIMAL_STACK_SIZE, NULL, 2, &xHandle);
+  StartFeed();
 
   /* Start scheduler */
   vTaskStartScheduler();           // Start the FreeRTOS scheduler
