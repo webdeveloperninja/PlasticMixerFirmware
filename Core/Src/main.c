@@ -95,8 +95,6 @@ int CalibrationValveOpen = FALSE;
 int CalibrationTubeFull = FALSE;
 
 
-// TODO Interrupt Set CalibrationTubeFull based on limit switch
-
 TaskHandle_t xStartAdditiveMotorTaskHandle = NULL;
 
 void StartFeed()
