@@ -36,6 +36,9 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define TRUE 1
+#define FALSE 0
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -78,6 +81,12 @@ int PercentColorMaterial = 0;
 int AdditiveMaterialMotorStepsPerSecond = 100;
 
 int CalculateAdditiveMaterialMotorSpeedIntervalSeconds = 300;
+
+// This will be the digital out for a relay to power 24 V pump
+int CalibrationValveOpen = FALSE;
+
+// This will be a limit switch state.
+int CalibrationTubeFull = FALSE;
 
 
 TaskHandle_t xStartAdditiveMotorTaskHandle = NULL;
