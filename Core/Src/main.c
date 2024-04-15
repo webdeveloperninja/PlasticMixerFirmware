@@ -67,6 +67,7 @@ void SetCalibrationValveClosed();
 void StartFeed();
 void StopFeed();
 void StartAdditiveMotorTask(void *argument);
+void CalibrateAdditiveMaterialFlow();
 
 /* USER CODE END PFP */
 
@@ -86,7 +87,9 @@ int AdditivePercentRate = 2;
 // SET FROM CALIBRATION
 int AdditiveMaterialMotorStepsPerSecond = 100;
 
-int CalculateAdditiveMaterialMotorSpeedIntervalSeconds = 300;
+int GramsPerAdditiveMotorStep = 0;
+
+int CalculateAdditiveMaterialMotorSpeedIntervalSeconds = 30;
 
 // This will be the digital out for a relay to power 24 V pump
 int CalibrationValveOpen = FALSE;
@@ -130,7 +133,14 @@ void StartAdditiveMotorTask(void *argument)
     while (1)
     {
         CalibrateVirginMaterialFlow();
-        StartAdditiveMaterialMotorClockwise();
+        CalibrateAdditiveMaterialFlow();
+
+        float AdditiveMaterialGramsPerCup = (VirginMaterialGramsPerCup * AdditivePercentRate) / 100.0f;
+        float AdditiveMaterialGramsPerSecond = AdditiveMaterialGramsPerCup * VirginMaterialGramsPerSecond / VirginMaterialGramsPerCup;
+
+        AdditiveMaterialMotorStepsPerSecond = (int)(AdditiveMaterialGramsPerSecond / GramsPerAdditiveMotorStep);
+
+        StartAdditiveMaterialMotorClockwise(AdditiveMaterialMotorStepsPerSecond);
 
         printf("Virgin Material Flow Calibration Task\n");
         vTaskDelay(calculateAdditiveMaterialMotorSpeedInterval);
@@ -145,9 +155,9 @@ void CalibrateVirginMaterialFlow() {
 
     xStartTime = xTaskGetTickCount();
 
+    int pollCalibrationTubeStatusDelayMS = 10;
     while (CalibrationTubeFull == FALSE) {
-    	// DELAY Polling Calibration Tube Full to save CPU cycles
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(pollCalibrationTubeStatusDelayMS / portTICK_PERIOD_MS);
     }
 
     xEndTime = xTaskGetTickCount();
@@ -160,9 +170,33 @@ void CalibrateVirginMaterialFlow() {
     printf("Virgin Material Flow Rate: %d grams/second\n", VirginMaterialGramsPerSecond);
 }
 
-
-void StartAdditiveMaterialMotorClockwise()
+void CalibrateAdditiveMaterialFlow()
 {
+	int startingHopperWeight = GetHopperMassGrams();
+
+
+	StartAdditiveMaterialMotorClockwise(AdditiveMaterialMotorStepsPerSecond);
+
+	int calibrationMaterialTimeSeconds = 5;
+    vTaskDelay((calibrationMaterialTimeSeconds * 1000) / portTICK_PERIOD_MS);
+
+    StopAdditiveMaterialMotor();
+
+	int endingHopperWeight = GetHopperMassGrams();
+
+	int weightDifference = endingHopperWeight - startingHopperWeight;
+	float gramsPerSecond = weightDifference / (float)calibrationMaterialTimeSeconds;
+
+    int totalSteps = AdditiveMaterialMotorStepsPerSecond * calibrationMaterialTimeSeconds;
+
+    GramsPerAdditiveMotorStep = weightDifference / (float)totalSteps;
+}
+
+
+void StartAdditiveMaterialMotorClockwise(int stepsPerSeconds)
+{
+	// Assume Calibrated Here
+	// Calculate Speed And Set Motor Clockwise
 	// TODO: Implement
 }
 
@@ -182,6 +216,13 @@ void SetCalibrationValveClosed()
 {
 	// TODO: Implement
 	CalibrationValveOpen = FALSE;
+}
+
+int GetHopperMassGrams()
+{
+	// TODO: poll 4 load cells and calculate grams
+
+	return 44;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
