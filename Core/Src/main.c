@@ -68,6 +68,7 @@ void StartFeed();
 void StopFeed();
 void StartAdditiveMotorTask(void *argument);
 void CalibrateAdditiveMaterialFlow();
+int GetHopperMassGrams();
 
 /* USER CODE END PFP */
 
